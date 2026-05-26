@@ -1,7 +1,5 @@
 # Project Tempest — setup steps (in order)
 
-**Confused about Railway?** Read **[RAILWAY-START.md](./RAILWAY-START.md)** first — same steps, simpler wording, uses `southernoptimisation.com`.
-
 **No Railway download** — use [railway.com](https://railway.com) in your browser.  
 **Cost:** ~$5/month on Railway after the free trial (shop stays on AWS S3).
 

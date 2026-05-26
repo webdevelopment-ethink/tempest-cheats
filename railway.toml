@@ -1,10 +1,7 @@
 [build]
-builder = "nixpacks"
-# Server only — static shop is on AWS S3
-buildCommand = "npm ci"
+builder = "dockerfile"
 
 [deploy]
-startCommand = "npm run start:server"
 healthcheckPath = "/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

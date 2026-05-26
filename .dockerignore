@@ -1,0 +1,12 @@
+node_modules
+dist
+s3-upload
+.git
+.env
+.env.*
+data
+keys/inventory/*.txt
+!keys/inventory/*.example.txt
+*.md
+.vscode
+.DS_Store

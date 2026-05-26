@@ -1,0 +1,12 @@
+# Railway/Nixpacks: compile better-sqlite3 (node-gyp needs Python + GCC)
+providers = ["node", "python"]
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "python311", "gcc", "gnumake"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+# Shop is on S3 — server-only deploy (skip Vite frontend build)
+[phases.build]
+cmds = ["node -e \"require('better-sqlite3'); console.log('better-sqlite3 ok')\""]

@@ -1,5 +1,7 @@
 [build]
 builder = "nixpacks"
+# Server only — static shop is on AWS S3
+buildCommand = "npm ci"
 
 [deploy]
 startCommand = "npm run start:server"

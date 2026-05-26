@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta
+      name="description"
+      content="Secure checkout for Project Tempest. Enter your email and complete payment to receive your key by email."
+    />
+    <title>Checkout — Project Tempest</title>
+  </head>
+  <body class="checkout-body">
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow bg-glow--1" aria-hidden="true"></div>
+    <div class="bg-glow bg-glow--2" aria-hidden="true"></div>
+
+    <main class="checkout-page">
+      <div class="checkout-grid">
+        <!-- ============ LEFT: ORDER SUMMARY ============ -->
+        <aside class="order-summary">
+          <a href="/" class="order-summary__brand" aria-label="Project Tempest home">
+            <img src="/images/logo-transparent.png" alt="" class="order-summary__brand-mark" />
+            <span>Project Tempest</span>
+            <svg class="order-summary__brand-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+
+          <div class="order-summary__hero">
+            <span class="order-summary__hero-label">Pay Project Tempest</span>
+            <div class="order-summary__hero-amount" id="hero-amount">$0.00</div>
+          </div>
+
+          <div class="order-summary__divider"></div>
+
+          <div class="order-line">
+            <div class="order-line__thumb" aria-hidden="true">
+              <img src="/images/game-arc.jpg" alt="" />
+            </div>
+            <div class="order-line__info">
+              <div class="order-line__title-row">
+                <strong id="line-title">Arc Raiders</strong>
+                <span class="order-line__qty">x1</span>
+              </div>
+              <p id="line-sub">Arc Raiders Key</p>
+            </div>
+            <div class="order-line__price" id="line-price">$0.00</div>
+          </div>
+
+          <div class="order-summary__row">
+            <span>Subtotal</span>
+            <strong id="row-subtotal">$0.00</strong>
+          </div>
+          <div class="order-summary__divider order-summary__divider--soft"></div>
+          <div class="order-summary__row order-summary__row--total">
+            <span>Total</span>
+            <strong id="row-total">$0.00</strong>
+          </div>
+
+          <div class="order-summary__hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="6" y="2.5" width="12" height="19" rx="2.5"/>
+              <circle cx="12" cy="18" r="0.9" fill="currentColor"/>
+            </svg>
+            Pay on mobile
+          </div>
+
+          <div class="order-summary__support">
+            <h4>Having issues with your order?</h4>
+            <p>Join Discord and open a support ticket — our team will help with keys, setup, or payment questions.</p>
+            <a href="https://discord.gg/zBZsmx2Frv" target="_blank" rel="noopener noreferrer" class="order-summary__support-link">
+              Open a Support Ticket
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </aside>
+
+        <!-- ============ RIGHT: CHECKOUT FORM ============ -->
+        <section class="checkout-main" aria-labelledby="checkout-heading">
+          <div class="checkout-stepper" aria-hidden="true">
+            <div class="stepper__step is-active">
+              <span class="stepper__dot"></span>
+              Order Information
+            </div>
+            <div class="stepper__step">
+              <span class="stepper__dot"></span>
+              Confirm &amp; Pay
+            </div>
+            <div class="stepper__step">
+              <span class="stepper__dot"></span>
+              Receive Your Key
+            </div>
+          </div>
+
+          <h1 id="checkout-heading" class="sr-only">Checkout</h1>
+
+          <form id="checkout-form" class="checkout-form" novalidate>
+            <section class="form-section">
+              <header class="form-section__head">
+                <h3>Contact &amp; Delivery</h3>
+              </header>
+              <div class="floating-field">
+                <input
+                  id="checkout-email"
+                  name="email"
+                  type="email"
+                  inputmode="email"
+                  autocomplete="email"
+                  placeholder=" "
+                  required
+                />
+                <label for="checkout-email">E-mail Address *</label>
+              </div>
+              <p class="form-section__hint">
+                Your license key is delivered automatically to this email after payment.
+              </p>
+            </section>
+
+            <section class="form-section">
+              <header class="form-section__head">
+                <h3>Discount</h3>
+              </header>
+              <div class="coupon-field">
+                <input id="coupon-code" name="coupon" type="text" placeholder="Coupon Code" autocomplete="off" />
+                <button type="button" id="coupon-apply" class="coupon-field__apply">
+                  Apply
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+              <p class="form-section__hint" id="coupon-feedback" role="status" aria-live="polite"></p>
+            </section>
+
+            <section class="form-section">
+              <header class="form-section__head form-section__head--row">
+                <h3>Payment</h3>
+                <span class="secure-pill">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <rect x="4" y="11" width="16" height="10" rx="2"/>
+                    <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+                  </svg>
+                  All transactions are secure and encrypted.
+                </span>
+              </header>
+
+              <div class="payment-methods" role="radiogroup" aria-label="Payment method">
+                <label class="payment-card is-active">
+                  <input type="radio" name="payment-method" value="stripe" checked />
+                  <span class="payment-card__icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 22" fill="none" aria-hidden="true">
+                      <rect x="0.5" y="0.5" width="31" height="21" rx="3" fill="#1a1a1a" stroke="#3a3a3a"/>
+                      <rect x="3" y="4" width="26" height="4" fill="#d4af37"/>
+                      <rect x="3" y="13" width="8" height="2" fill="#777"/>
+                      <rect x="3" y="16" width="14" height="2" fill="#777"/>
+                    </svg>
+                  </span>
+                  <span class="payment-card__body">
+                    <strong>Debit &amp; Credit Card / Apple Pay / Google Pay</strong>
+                    <span class="payment-card__meta">
+                      <span class="payment-pill">Pay</span>
+                      <span class="payment-pill payment-pill--g">G Pay</span>
+                      via Stripe
+                    </span>
+                  </span>
+                </label>
+
+                <label class="payment-card">
+                  <input type="radio" name="payment-method" value="crypto" />
+                  <span class="payment-card__icon payment-card__icon--ltc" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                      <circle cx="16" cy="16" r="16" fill="#345D9D"/>
+                      <path d="M13.5 8h4l-2.2 8.4 2.2-.7-.6 2.4-2.2.7-.9 3.3H22l-.7 2.5H10l1.6-6 -2.1.7.6-2.4 2.1-.7L13.5 8z" fill="#fff"/>
+                    </svg>
+                  </span>
+                  <span class="payment-card__body">
+                    <strong>Litecoin</strong>
+                    <span class="payment-card__meta">via Litecoin Network</span>
+                  </span>
+                </label>
+              </div>
+            </section>
+
+            <div class="checkout-agreements">
+              <label class="checkbox">
+                <input id="agree-terms" type="checkbox" required />
+                <span>I have read and agree to Project Tempest's <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>.</span>
+              </label>
+              <label class="checkbox">
+                <input id="agree-marketing" type="checkbox" />
+                <span>I would like to receive updates and promotions from Project Tempest.</span>
+              </label>
+            </div>
+
+            <button id="checkout-submit" type="submit" class="btn btn--primary btn--block btn--lg checkout-submit">
+              <span>Proceed to Payment</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <p id="checkout-feedback" class="checkout-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="/src/checkout.js"></script>
+  </body>
+</html>

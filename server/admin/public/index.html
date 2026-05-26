@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project Tempest — Key Admin</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div id="login-screen" class="login-screen hidden">
+      <div class="login-card">
+        <div class="login-card__brand">
+          <span class="login-card__logo">⚡</span>
+          <h1>Project Tempest</h1>
+          <p>Key inventory &amp; analytics</p>
+        </div>
+        <form id="login-form">
+          <label for="login-password">Team password</label>
+          <input id="login-password" type="password" autocomplete="current-password" required />
+          <button type="submit" class="btn btn--primary">Sign in</button>
+          <p id="login-error" class="form-error" role="alert"></p>
+        </form>
+      </div>
+    </div>
+
+    <div id="app" class="app hidden">
+      <header class="topbar">
+        <div class="topbar__brand">
+          <span class="topbar__logo">⚡</span>
+          <div>
+            <strong>Project Tempest</strong>
+            <span>Key Admin</span>
+          </div>
+        </div>
+        <nav class="tabs" role="tablist">
+          <button type="button" class="tab is-active" data-tab="dashboard">Dashboard</button>
+          <button type="button" class="tab" data-tab="import">Import Keys</button>
+          <button type="button" class="tab" data-tab="lookup">Lookup</button>
+        </nav>
+        <button type="button" id="logout-btn" class="btn btn--ghost">Sign out</button>
+      </header>
+
+      <main class="main">
+        <!-- Dashboard -->
+        <section id="panel-dashboard" class="panel-view">
+          <div class="stats-grid" id="stats-grid"></div>
+
+          <div class="grid-2">
+            <div class="card">
+              <h2>Stock by product</h2>
+              <div class="table-wrap">
+                <table class="data-table" id="stock-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Available</th>
+                      <th>Sold</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <h2>Sales last 7 days</h2>
+              <div id="chart-bars" class="chart-bars"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Recent sales</h2>
+            <div class="table-wrap">
+              <table class="data-table" id="recent-table">
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Product</th>
+                    <th>Email</th>
+                    <th>Key</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Import -->
+        <section id="panel-import" class="panel-view hidden">
+          <div class="card card--narrow">
+            <h2>Import license keys</h2>
+            <p class="muted">One key per line. Lines starting with <code>#</code> are ignored. Duplicates are skipped.</p>
+            <form id="import-form">
+              <label for="import-product">Product</label>
+              <select id="import-product" required>
+                <option value="arc-1-day">Arc Raiders — 1 Day</option>
+                <option value="arc-3-day">Arc Raiders — 3 Days</option>
+                <option value="arc-7-day" selected>Arc Raiders — 7 Days</option>
+                <option value="arc-30-day">Arc Raiders — 30 Days</option>
+              </select>
+
+              <label for="import-keys">Keys</label>
+              <textarea id="import-keys" rows="12" placeholder="PASTE-KEY-ONE&#10;PASTE-KEY-TWO&#10;PASTE-KEY-THREE" required></textarea>
+
+              <button type="submit" class="btn btn--primary">Import keys</button>
+              <p id="import-result" class="form-message" role="status"></p>
+            </form>
+          </div>
+        </section>
+
+        <!-- Lookup -->
+        <section id="panel-lookup" class="panel-view hidden">
+          <div class="card card--narrow">
+            <h2>Support lookup</h2>
+            <p class="muted">Find which key was sent to a customer (use their checkout email).</p>
+            <form id="lookup-form">
+              <label for="lookup-email">Customer email</label>
+              <input id="lookup-email" type="email" placeholder="buyer@example.com" />
+
+              <label for="lookup-session">Or Stripe session ID</label>
+              <input id="lookup-session" type="text" placeholder="cs_live_..." />
+
+              <button type="submit" class="btn btn--primary">Search</button>
+            </form>
+            <div id="lookup-results" class="lookup-results"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/admin/admin.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,2 @@
+# Copy to arc-30-day.txt and add real keys, then import:
+#   npm run keys -- import arc-30-day keys/inventory/arc-30-day.txt

@@ -1,0 +1,6 @@
+# One license key per line. Lines starting with # are ignored.
+# Copy this file to arc-1-day.txt and paste your real keys, then:
+#   npm run keys -- import arc-1-day keys/inventory/arc-1-day.txt
+#
+# EXAMPLE-KEY-1-DAY-AAAA
+# EXAMPLE-KEY-1-DAY-BBBB

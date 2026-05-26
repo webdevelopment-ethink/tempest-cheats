@@ -1,0 +1,128 @@
+.products-page {
+  padding-top: calc(var(--nav-height) + 2rem + env(safe-area-inset-top));
+}
+
+.products-hero .section-header h1 {
+  margin-bottom: 0.5rem;
+}
+
+.product-card__price {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: -0.02em;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.email-gate {
+  max-width: 720px;
+  margin-top: 1rem;
+}
+
+.email-gate__text {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.email-gate__form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.email-gate__form input {
+  width: 100%;
+  background: rgba(12, 12, 12, 0.85);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 0.8rem 0.95rem;
+  min-height: 44px;
+}
+
+.email-gate__form input::placeholder {
+  color: var(--text-disabled);
+}
+
+.email-gate__form input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+  outline: none;
+}
+
+.email-gate__feedback {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--gold);
+}
+
+.email-gate__feedback.is-error {
+  color: #ef6d6d;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.stock-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.stock-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  color: var(--gold);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.stock-badge.is-low {
+  color: #ffcb63;
+  border-color: rgba(255, 203, 99, 0.55);
+  background: rgba(255, 203, 99, 0.12);
+}
+
+.stock-badge.is-out {
+  color: #ff7b7b;
+  border-color: rgba(255, 123, 123, 0.55);
+  background: rgba(255, 123, 123, 0.12);
+}
+
+.stock-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.stock-count strong {
+  color: var(--text);
+}
+
+@media (max-width: 1024px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .email-gate__form {
+    grid-template-columns: 1fr;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+}

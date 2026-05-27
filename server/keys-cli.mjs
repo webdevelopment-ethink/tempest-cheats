@@ -7,6 +7,7 @@ import {
   getStockCounts,
   lookupByEmail,
   lookupBySession,
+  restoreKeyByPlaintext,
   assertProductId,
 } from "./db.mjs";
 import { sendKeyEmail } from "./email.mjs";
@@ -29,6 +30,7 @@ Commands:
   add <product-id> <key>               Add a single key
   lookup email <address>               Find keys sold to an email
   lookup session <session_id>          Find key for a Stripe checkout session
+  restore <key-code>                   Return a sold key to "available" (refunds/tests)
   test-email <address>                 Send a sample delivery email to verify Resend
 
 Product IDs:
@@ -153,6 +155,32 @@ Delivery for session ${value}:
   process.exit(1);
 }
 
+async function cmdRestore(db, plaintext) {
+  if (!plaintext) {
+    console.error("Provide the plaintext key: npm run keys -- restore KEY-1234-...");
+    process.exit(1);
+  }
+
+  const result = await restoreKeyByPlaintext(db, plaintext.trim());
+
+  if (!result.restored) {
+    if (result.reason === "not_found") {
+      console.error(`Key not found in inventory (no row matches that plaintext).`);
+    } else if (result.reason === "already_available") {
+      console.log(`Key is already 'available' — nothing to do.`);
+    } else {
+      console.error(`Restore failed: ${result.reason}`);
+    }
+    process.exit(result.reason === "already_available" ? 0 : 1);
+  }
+
+  console.log(`\nRestored to inventory:`);
+  console.log(`  product:        ${result.productId}`);
+  console.log(`  session removed:${result.stripeSessionId || "(none)"}`);
+  console.log(`  previous buyer: ${result.previousEmail || "(none)"}\n`);
+  await cmdStock(db);
+}
+
 async function cmdTestEmail(address) {
   if (!address || !/.+@.+\..+/.test(address)) {
     console.error('Provide an email address: npm run keys -- test-email you@example.com');
@@ -189,6 +217,9 @@ async function main() {
       break;
     case "lookup":
       await cmdLookup(getDb(), args[0], args[1]);
+      break;
+    case "restore":
+      await cmdRestore(getDb(), args[0]);
       break;
     case "test-email":
       await cmdTestEmail(args[0]);

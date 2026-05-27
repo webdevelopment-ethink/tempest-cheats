@@ -196,6 +196,64 @@ export async function lookupByEmail(db, email) {
   }));
 }
 
+/**
+ * Restore a sold key back to "available" inventory.  Use this for test
+ * purchases or refunded orders so the key can be sold again.
+ *
+ * Looks the row up by HMAC fingerprint of the plaintext key (the
+ * encrypted ciphertext differs per row because of the random IV, so
+ * fingerprint is the only way to find a row from plaintext).
+ *
+ * Returns:
+ *   { restored: true,  productId, stripeSessionId } on success
+ *   { restored: false, reason: "not_found" | "already_available" }
+ */
+export async function restoreKeyByPlaintext(db, plaintext) {
+  const fp = fingerprintKey(plaintext);
+
+  const { data: row, error } = await db
+    .from("keys")
+    .select("id, product_id, status, stripe_session_id, email")
+    .eq("key_fingerprint", fp)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!row) return { restored: false, reason: "not_found" };
+  if (row.status !== "sold") return { restored: false, reason: "already_available" };
+
+  const previousSession = row.stripe_session_id;
+  const previousEmail = row.email;
+  const previousProductId = row.product_id;
+
+  // Remove the delivery row first so the unique constraint on
+  // stripe_session_id in keys can be cleared next.
+  if (previousSession) {
+    const { error: delErr } = await db
+      .from("deliveries")
+      .delete()
+      .eq("stripe_session_id", previousSession);
+    if (delErr) throw delErr;
+  }
+
+  const { error: updErr } = await db
+    .from("keys")
+    .update({
+      status: "available",
+      stripe_session_id: null,
+      email: null,
+      sold_at: null,
+    })
+    .eq("id", row.id);
+  if (updErr) throw updErr;
+
+  return {
+    restored: true,
+    productId: previousProductId,
+    stripeSessionId: previousSession,
+    previousEmail,
+  };
+}
+
 export async function lookupBySession(db, stripeSessionId) {
   const { data, error } = await db
     .from("deliveries")

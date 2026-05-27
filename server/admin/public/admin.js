@@ -3,7 +3,6 @@ const $$ = (sel) => document.querySelectorAll(sel);
 
 const PRODUCT_LABELS = {
   "arc-1-day": "1 Day",
-  "arc-3-day": "3 Days",
   "arc-7-day": "7 Days",
   "arc-30-day": "30 Days",
 };
@@ -109,7 +108,7 @@ async function loadDashboard() {
     </div>
   `;
 
-  const products = ["arc-1-day", "arc-3-day", "arc-7-day", "arc-30-day"];
+  const products = ["arc-1-day", "arc-7-day", "arc-30-day"];
   const stockBody = $("#stock-table tbody");
   stockBody.innerHTML = products
     .map((id) => {

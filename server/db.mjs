@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 
-const VALID_PRODUCTS = new Set(["arc-1-day", "arc-3-day", "arc-7-day", "arc-30-day"]);
+const VALID_PRODUCTS = new Set(["arc-1-day", "arc-7-day", "arc-30-day"]);
 
 export function assertProductId(productId) {
   if (!VALID_PRODUCTS.has(productId)) {
@@ -201,12 +201,11 @@ export function lookupBySession(db, stripeSessionId) {
   return findDeliveryBySession(db, stripeSessionId);
 }
 
-export const PRODUCT_IDS = ["arc-1-day", "arc-3-day", "arc-7-day", "arc-30-day"];
+export const PRODUCT_IDS = ["arc-1-day", "arc-7-day", "arc-30-day"];
 
 export function productDisplayName(productId) {
   const names = {
     "arc-1-day": "Arc Raiders 1 Day",
-    "arc-3-day": "Arc Raiders 3 Days",
     "arc-7-day": "Arc Raiders 7 Days",
     "arc-30-day": "Arc Raiders 30 Days",
   };

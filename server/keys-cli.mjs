@@ -29,7 +29,7 @@ Commands:
   lookup session <session_id>   Find key for a Stripe checkout session
 
 Product IDs:
-  arc-1-day, arc-3-day, arc-7-day, arc-30-day
+  arc-1-day, arc-7-day, arc-30-day
 
 Examples:
   npm run keys -- import arc-7-day keys/inventory/arc-7-day.txt
@@ -41,7 +41,7 @@ Examples:
 
 function cmdStock() {
   const counts = getStockCounts(db);
-  const products = ["arc-1-day", "arc-3-day", "arc-7-day", "arc-30-day"];
+  const products = ["arc-1-day", "arc-7-day", "arc-30-day"];
 
   console.log("\nStock levels:\n");
   for (const productId of products) {

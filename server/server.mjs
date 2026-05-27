@@ -35,7 +35,10 @@ const {
     : "./data/keys.db",
   PORT = "8787",
   HOST = "0.0.0.0",
+  ADMIN_ENABLED = "false",
 } = process.env;
+
+const adminEnabled = String(ADMIN_ENABLED).toLowerCase() === "true";
 
 const db = openDatabase(KEY_DB_PATH);
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
@@ -249,7 +252,8 @@ const server = createServer(async (req, res) => {
     return json(res, 200, {
       ok: true,
       db: KEY_DB_PATH,
-      admin: adminPasswordConfigured(),
+      admin: adminEnabled && adminPasswordConfigured(),
+      adminEnabled,
       stripe: Boolean(stripe && STRIPE_WEBHOOK_SECRET),
       email: Boolean(process.env.RESEND_API_KEY && process.env.KEY_EMAIL_FROM),
     });
@@ -259,15 +263,19 @@ const server = createServer(async (req, res) => {
     return handleStripeWebhook(req, res);
   }
 
-  if (pathname.startsWith("/admin/api/")) {
-    return handleAdminApi(req, res, pathname);
-  }
+  if (pathname === "/admin" || pathname === "/admin/" || pathname.startsWith("/admin/")) {
+    if (!adminEnabled) {
+      return json(res, 404, { error: "not_found" });
+    }
 
-  if (pathname === "/admin" || pathname === "/admin/") {
-    return serveStatic(res, path.join(ADMIN_DIR, "index.html"));
-  }
+    if (pathname.startsWith("/admin/api/")) {
+      return handleAdminApi(req, res, pathname);
+    }
 
-  if (pathname.startsWith("/admin/")) {
+    if (pathname === "/admin" || pathname === "/admin/") {
+      return serveStatic(res, path.join(ADMIN_DIR, "index.html"));
+    }
+
     const rel = pathname.slice("/admin/".length);
     const safe = path.normalize(rel).replace(/^(\.\.(\/|\\|$))+/, "");
     const filePath = path.join(ADMIN_DIR, safe);
@@ -279,7 +287,8 @@ const server = createServer(async (req, res) => {
   }
 
   if (pathname === "/") {
-    return redirect(res, "/admin");
+    if (adminEnabled) return redirect(res, "/admin");
+    return json(res, 404, { error: "not_found" });
   }
 
   json(res, 404, { error: "not_found" });
@@ -287,10 +296,10 @@ const server = createServer(async (req, res) => {
 
 server.listen(Number(PORT), HOST, () => {
   console.log(`Tempest key server listening on http://${HOST}:${PORT}`);
-  console.log(`  Admin:    /admin`);
+  console.log(`  Admin:    ${adminEnabled ? "/admin (ENABLED)" : "DISABLED (set ADMIN_ENABLED=true to enable)"}`);
   console.log(`  Webhook:  POST /webhooks/stripe`);
   console.log(`  Database: ${KEY_DB_PATH}`);
-  if (!adminPasswordConfigured()) {
+  if (adminEnabled && !adminPasswordConfigured()) {
     console.warn("  WARNING: ADMIN_PASSWORD not set — admin login disabled.");
   }
   if (!stripe) console.warn("  WARNING: Stripe not configured.");

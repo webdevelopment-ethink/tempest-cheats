@@ -193,7 +193,7 @@
             <span class="section-label">Community</span>
             <h2 class="section-title">What Players <span>Say</span></h2>
           </div>
-          <div class="reviews-grid">
+          <div class="reviews-grid" id="reviews-grid">
             <article class="review-card reveal">
               <div class="review-card__stars" aria-label="5 out of 5 stars">★★★★★</div>
               <p>Insanely smooth aimbot — prediction feels natural and I haven't had a single issue. Fully worth it.</p>
@@ -242,9 +242,9 @@
               <div class="review-card__stars" aria-label="5 out of 5 stars">★★★★★</div>
               <p>Great cheat, easy setup, undetected so far. Radar positioning alone sold me on the 30-day key.</p>
               <div class="review-card__meta">
-                <div class="review-card__avatar">TF</div>
+                <div class="review-card__avatar">TG</div>
                 <div>
-                  <div class="review-card__author">tempest_fan42</div>
+                  <div class="review-card__author">The_GoatKing24</div>
                   <div class="review-card__game">Arc Raiders · 30 Day</div>
                 </div>
               </div>
@@ -271,6 +271,85 @@
                 </div>
               </div>
             </article>
+          </div>
+
+          <div class="review-form-wrap reveal">
+            <div class="review-form-panel">
+              <div class="review-form-panel__glow" aria-hidden="true"></div>
+              <div class="review-form-panel__head">
+                <span class="section-label">Your Turn</span>
+                <h3>Leave a <span>Review</span></h3>
+                <p>Share your experience with Project Tempest. Reviews are posted instantly.</p>
+              </div>
+
+              <form id="review-form" class="review-form" novalidate>
+                <div class="review-form__row">
+                  <label class="review-field">
+                    <span class="review-field__label">Display name</span>
+                    <input
+                      type="text"
+                      name="author"
+                      maxlength="32"
+                      required
+                      autocomplete="off"
+                      placeholder="e.g. xRift_"
+                      class="review-field__input"
+                    />
+                  </label>
+                  <label class="review-field">
+                    <span class="review-field__label">Plan</span>
+                    <select name="plan" class="review-field__input" required>
+                      <option value="">Select a plan…</option>
+                      <option value="Arc Raiders · 1 Day">Arc Raiders · 1 Day</option>
+                      <option value="Arc Raiders · 7 Day">Arc Raiders · 7 Day</option>
+                      <option value="Arc Raiders · 30 Day">Arc Raiders · 30 Day</option>
+                    </select>
+                  </label>
+                </div>
+
+                <fieldset class="review-field review-field--rating">
+                  <legend class="review-field__label">Rating</legend>
+                  <div class="rating-stars" role="radiogroup" aria-label="Rating">
+                    <input type="radio" id="star5" name="rating" value="5" checked />
+                    <label for="star5" aria-label="5 stars">★</label>
+                    <input type="radio" id="star4" name="rating" value="4" />
+                    <label for="star4" aria-label="4 stars">★</label>
+                    <input type="radio" id="star3" name="rating" value="3" />
+                    <label for="star3" aria-label="3 stars">★</label>
+                    <input type="radio" id="star2" name="rating" value="2" />
+                    <label for="star2" aria-label="2 stars">★</label>
+                    <input type="radio" id="star1" name="rating" value="1" />
+                    <label for="star1" aria-label="1 star">★</label>
+                  </div>
+                </fieldset>
+
+                <label class="review-field">
+                  <span class="review-field__label">Your review</span>
+                  <textarea
+                    name="body"
+                    rows="4"
+                    minlength="10"
+                    maxlength="400"
+                    required
+                    placeholder="What did you think of the cheat? Aimbot feel, ESP quality, setup, support…"
+                    class="review-field__input review-field__input--textarea"
+                  ></textarea>
+                  <span class="review-field__count" aria-hidden="true">
+                    <span data-count>0</span>/400
+                  </span>
+                </label>
+
+                <div class="review-form__actions">
+                  <p class="review-form__status" id="review-status" role="status" aria-live="polite"></p>
+                  <button type="submit" class="btn btn--primary">
+                    Post Review
+                    <svg class="btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </section>

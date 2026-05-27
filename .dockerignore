@@ -1,6 +1,6 @@
 node_modules
 dist
-s3-upload
+.vercel
 .git
 .env
 .env.*

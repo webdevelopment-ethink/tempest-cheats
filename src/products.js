@@ -77,30 +77,19 @@ panelEls.forEach((el) => {
   });
 });
 
-const STORAGE_STOCK_PREFIX = "tempest_stock_";
 const cards = document.querySelectorAll(".product-card");
-
 const stockState = {};
+
+const STOCK_API_URL =
+  import.meta.env.VITE_STOCK_API_URL ||
+  "https://tempest-cheats-production.up.railway.app";
 
 for (const card of cards) {
   const productId = card.dataset.productId;
   const config = PRODUCTS[productId];
   const defaultStock = Number(card.dataset.stock || config?.defaultStock || 0);
-  const stored = localStorage.getItem(`${STORAGE_STOCK_PREFIX}${productId}`);
 
-  let stock = defaultStock;
-  if (stored !== null && Number.isFinite(Number(stored))) {
-    const storedNum = Number(stored);
-    // Allow HTML default to override a saved "0" when restocking (e.g. 30-day keys)
-    if (storedNum === 0 && defaultStock > 0) {
-      stock = defaultStock;
-      localStorage.removeItem(`${STORAGE_STOCK_PREFIX}${productId}`);
-    } else {
-      stock = storedNum;
-    }
-  }
-
-  stockState[productId] = Math.max(0, stock);
+  stockState[productId] = Math.max(0, defaultStock);
 
   const priceEl = card.querySelector("[data-product-price]");
   if (priceEl && config) {
@@ -112,10 +101,6 @@ function stockMeta(stock) {
   if (stock <= 0) return { label: "Out of stock", cls: "is-out" };
   if (stock <= 5) return { label: "Low stock", cls: "is-low" };
   return { label: "In stock", cls: "is-in" };
-}
-
-function persistStock(productId) {
-  localStorage.setItem(`${STORAGE_STOCK_PREFIX}${productId}`, String(stockState[productId]));
 }
 
 function renderProducts() {
@@ -150,16 +135,31 @@ function renderProducts() {
   });
 }
 
-window.tempestStock = {
-  set(productId, qty) {
-    if (!(productId in stockState)) return;
-    stockState[productId] = Math.max(0, Number(qty) || 0);
-    persistStock(productId);
+async function refreshLiveStock() {
+  if (!STOCK_API_URL) return;
+  try {
+    const res = await fetch(`${STOCK_API_URL.replace(/\/$/, "")}/api/stock`, {
+      method: "GET",
+      mode: "cors",
+      credentials: "omit",
+      cache: "no-store",
+    });
+    if (!res.ok) return;
+    const body = await res.json();
+    const live = body?.stock;
+    if (!live || typeof live !== "object") return;
+
+    for (const productId of Object.keys(stockState)) {
+      const entry = live[productId];
+      if (entry && Number.isFinite(Number(entry.available))) {
+        stockState[productId] = Math.max(0, Number(entry.available));
+      }
+    }
     renderProducts();
-  },
-  get() {
-    return { ...stockState };
-  },
-};
+  } catch {
+    // Network/CORS errors are silent — HTML defaults stay in place.
+  }
+}
 
 renderProducts();
+refreshLiveStock();

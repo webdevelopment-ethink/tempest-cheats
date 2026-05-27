@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  openDatabase,
+  createDbClient,
   importKeys,
   getStockCounts,
   lookupByEmail,
@@ -10,37 +10,56 @@ import {
   assertProductId,
 } from "./db.mjs";
 
-const KEY_DB_PATH = process.env.KEY_DB_PATH || "./data/keys.db";
-const db = openDatabase(KEY_DB_PATH);
-
 const [, , command, ...args] = process.argv;
 
 function usage() {
   console.log(`
-Project Tempest — key inventory (SQLite)
+Project Tempest — key inventory (Supabase, encrypted)
 
-Database: ${KEY_DB_PATH}
+Required env vars (put them in .env at the project root):
+  SUPABASE_URL                 https://<your-ref>.supabase.co
+  SUPABASE_SERVICE_ROLE_KEY    eyJ... (Settings → API → service_role secret)
+  KEY_ENCRYPTION_SECRET        a long random string (32+ chars)
 
 Commands:
-  stock                         Show available/sold counts per product
-  import <product-id> <file>    Import keys from a text file (one key per line)
-  add <product-id> <key>        Add a single key
-  lookup email <address>        Find keys sold to an email (support)
-  lookup session <session_id>   Find key for a Stripe checkout session
+  stock                                Show available/sold counts per product
+  import <product-id> <file>           Import keys from a text file (one per line)
+  import <product-id> --inline <list>  Import comma/whitespace-separated keys inline
+  add <product-id> <key>               Add a single key
+  lookup email <address>               Find keys sold to an email
+  lookup session <session_id>          Find key for a Stripe checkout session
 
 Product IDs:
   arc-1-day, arc-7-day, arc-30-day
 
 Examples:
   npm run keys -- import arc-7-day keys/inventory/arc-7-day.txt
+  npm run keys -- import arc-7-day --inline "ABC-123, DEF-456, GHI-789"
   npm run keys -- add arc-1-day MY-LICENSE-KEY-HERE
   npm run keys -- stock
   npm run keys -- lookup email buyer@example.com
 `);
 }
 
-function cmdStock() {
-  const counts = getStockCounts(db);
+function splitInlineKeys(raw) {
+  return String(raw || "")
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function getDb() {
+  try {
+    return createDbClient();
+  } catch (err) {
+    console.error("\n" + err.message);
+    console.error("\nFix: copy .env.key-delivery.example to .env and fill in your Supabase keys.\n");
+    process.exit(1);
+  }
+}
+
+async function cmdStock(db) {
+  const counts = await getStockCounts(db);
   const products = ["arc-1-day", "arc-7-day", "arc-30-day"];
 
   console.log("\nStock levels:\n");
@@ -53,37 +72,53 @@ function cmdStock() {
   console.log("");
 }
 
-function cmdImport(productId, filePath) {
+async function cmdImport(db, productId, source, ...rest) {
   assertProductId(productId);
-  const resolved = path.resolve(filePath);
-  if (!fs.existsSync(resolved)) {
-    console.error(`File not found: ${resolved}`);
+
+  let keys = [];
+  let label = "";
+
+  if (source === "--inline" || source === "-i") {
+    const joined = rest.join(" ");
+    keys = splitInlineKeys(joined);
+    label = "inline";
+  } else {
+    const resolved = path.resolve(source);
+    if (!fs.existsSync(resolved)) {
+      console.error(`File not found: ${resolved}`);
+      process.exit(1);
+    }
+    keys = fs.readFileSync(resolved, "utf8").split(/\r?\n/);
+    label = resolved;
+  }
+
+  if (!keys.length) {
+    console.error("No keys provided.");
     process.exit(1);
   }
 
-  const lines = fs.readFileSync(resolved, "utf8").split(/\r?\n/);
-  const { added, skipped } = importKeys(db, productId, lines);
+  const { added, skipped } = await importKeys(db, productId, keys);
 
-  console.log(`\nImported into ${productId} from ${resolved}`);
+  console.log(`\nImported into ${productId} from ${label}`);
   console.log(`  Added:   ${added}`);
-  console.log(`  Skipped: ${skipped} (duplicate or empty lines)\n`);
-  cmdStock();
+  console.log(`  Skipped: ${skipped} (duplicate or empty)\n`);
+  await cmdStock(db);
 }
 
-function cmdAdd(productId, keyCode) {
+async function cmdAdd(db, productId, keyCode) {
   assertProductId(productId);
-  const { added, skipped } = importKeys(db, productId, [keyCode]);
+  const { added } = await importKeys(db, productId, [keyCode]);
   if (added === 0) {
     console.error("Key was not added (duplicate or empty).");
     process.exit(1);
   }
   console.log(`Added key to ${productId}.`);
-  cmdStock();
+  await cmdStock(db);
 }
 
-function cmdLookup(kind, value) {
+async function cmdLookup(db, kind, value) {
   if (kind === "email") {
-    const rows = lookupByEmail(db, value);
+    const rows = await lookupByEmail(db, value);
     if (!rows.length) {
       console.log(`No sold keys found for ${value}`);
       return;
@@ -97,7 +132,7 @@ function cmdLookup(kind, value) {
   }
 
   if (kind === "session") {
-    const row = lookupBySession(db, value);
+    const row = await lookupBySession(db, value);
     if (!row) {
       console.log(`No delivery found for session ${value}`);
       return;
@@ -116,27 +151,34 @@ Delivery for session ${value}:
   process.exit(1);
 }
 
-switch (command) {
-  case "stock":
-    cmdStock();
-    break;
-  case "import":
-    cmdImport(args[0], args[1]);
-    break;
-  case "add":
-    cmdAdd(args[0], args[1]);
-    break;
-  case "lookup":
-    cmdLookup(args[0], args[1]);
-    break;
-  case undefined:
-  case "help":
-  case "-h":
-  case "--help":
-    usage();
-    break;
-  default:
-    console.error(`Unknown command: ${command}\n`);
-    usage();
-    process.exit(1);
+async function main() {
+  switch (command) {
+    case "stock":
+      await cmdStock(getDb());
+      break;
+    case "import":
+      await cmdImport(getDb(), args[0], args[1], ...args.slice(2));
+      break;
+    case "add":
+      await cmdAdd(getDb(), args[0], args[1]);
+      break;
+    case "lookup":
+      await cmdLookup(getDb(), args[0], args[1]);
+      break;
+    case undefined:
+    case "help":
+    case "-h":
+    case "--help":
+      usage();
+      break;
+    default:
+      console.error(`Unknown command: ${command}\n`);
+      usage();
+      process.exit(1);
+  }
 }
+
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

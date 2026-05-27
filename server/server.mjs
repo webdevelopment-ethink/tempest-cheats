@@ -4,11 +4,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Stripe from "stripe";
 import {
-  openDatabase,
+  createDbClient,
+  isDbConfigured,
   reserveKeyForOrder,
   assertProductId,
   importKeys,
   getStockCounts,
+  getPublicStock,
   getAnalytics,
   lookupByEmail,
   lookupBySession,
@@ -30,18 +32,30 @@ const ADMIN_DIR = path.join(__dirname, "admin", "public");
 const {
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
-  KEY_DB_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH
-    ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/keys.db`
-    : "./data/keys.db",
   PORT = "8787",
   HOST = "0.0.0.0",
   ADMIN_ENABLED = "false",
+  ALLOWED_ORIGINS = "",
 } = process.env;
 
 const adminEnabled = String(ADMIN_ENABLED).toLowerCase() === "true";
 
-const db = openDatabase(KEY_DB_PATH);
+const dbConfigured = isDbConfigured();
+const db = dbConfigured ? createDbClient() : null;
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
+
+const allowedOrigins = new Set(
+  ALLOWED_ORIGINS.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+// Sensible defaults if the env var isn't set.
+if (!allowedOrigins.size) {
+  allowedOrigins.add("https://projectempest.xyz");
+  allowedOrigins.add("https://www.projectempest.xyz");
+  allowedOrigins.add("http://localhost:5173");
+  allowedOrigins.add("http://localhost:5174");
+}
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -67,6 +81,17 @@ async function readJson(req) {
   }
 }
 
+function applyCors(req, res) {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+}
+
 function json(res, status, data) {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(data));
@@ -88,6 +113,18 @@ function serveStatic(res, filePath) {
   res.end(fs.readFileSync(filePath));
 }
 
+function requireDb(res) {
+  if (!db) {
+    json(res, 503, {
+      ok: false,
+      error: "db_not_configured",
+      message: "Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and KEY_ENCRYPTION_SECRET.",
+    });
+    return false;
+  }
+  return true;
+}
+
 function requireAuth(req, res) {
   if (!adminPasswordConfigured()) {
     json(res, 503, { error: "admin_not_configured", message: "Set ADMIN_PASSWORD on the server." });
@@ -105,6 +142,7 @@ async function handleStripeWebhook(req, res) {
     json(res, 503, { ok: false, error: "stripe_not_configured" });
     return;
   }
+  if (!requireDb(res)) return;
 
   const body = await readBody(req);
   const signature = req.headers["stripe-signature"];
@@ -144,7 +182,7 @@ async function handleStripeWebhook(req, res) {
           return;
         }
 
-        const result = reserveKeyForOrder(db, { productId, email, stripeSessionId });
+        const result = await reserveKeyForOrder(db, { productId, email, stripeSessionId });
 
         if (!result.alreadyDelivered) {
           await sendKeyEmail({
@@ -201,13 +239,14 @@ async function handleAdminApi(req, res, pathname) {
   }
 
   if (!requireAuth(req, res)) return;
+  if (!requireDb(res)) return;
 
   if (pathname === "/admin/api/analytics" && req.method === "GET") {
-    return json(res, 200, getAnalytics(db));
+    return json(res, 200, await getAnalytics(db));
   }
 
   if (pathname === "/admin/api/stock" && req.method === "GET") {
-    return json(res, 200, { stock: getStockCounts(db), products: PRODUCT_IDS });
+    return json(res, 200, { stock: await getStockCounts(db), products: PRODUCT_IDS });
   }
 
   if (pathname === "/admin/api/import" && req.method === "POST") {
@@ -222,8 +261,8 @@ async function handleAdminApi(req, res, pathname) {
 
     const text = body.keys || "";
     const lines = Array.isArray(body.keysList) ? body.keysList : text.split(/\r?\n/);
-    const result = importKeys(db, body.productId, lines);
-    return json(res, 200, { ok: true, ...result, stock: getStockCounts(db) });
+    const result = await importKeys(db, body.productId, lines);
+    return json(res, 200, { ok: true, ...result, stock: await getStockCounts(db) });
   }
 
   if (pathname === "/admin/api/lookup" && req.method === "GET") {
@@ -232,10 +271,10 @@ async function handleAdminApi(req, res, pathname) {
     const session = url.searchParams.get("session");
 
     if (email) {
-      return json(res, 200, { results: lookupByEmail(db, email) });
+      return json(res, 200, { results: await lookupByEmail(db, email) });
     }
     if (session) {
-      const row = lookupBySession(db, session);
+      const row = await lookupBySession(db, session);
       return json(res, 200, { results: row ? [row] : [] });
     }
     return json(res, 400, { error: "provide email or session query param" });
@@ -251,12 +290,33 @@ const server = createServer(async (req, res) => {
   if (pathname === "/health") {
     return json(res, 200, {
       ok: true,
-      db: KEY_DB_PATH,
+      db: dbConfigured ? "supabase" : "unconfigured",
       admin: adminEnabled && adminPasswordConfigured(),
       adminEnabled,
       stripe: Boolean(stripe && STRIPE_WEBHOOK_SECRET),
       email: Boolean(process.env.RESEND_API_KEY && process.env.KEY_EMAIL_FROM),
     });
+  }
+
+  // Public stock endpoint — used by the Vercel frontend to show live counts.
+  if (pathname === "/api/stock") {
+    applyCors(req, res);
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      return res.end();
+    }
+    if (req.method !== "GET") {
+      return json(res, 405, { error: "method_not_allowed" });
+    }
+    if (!requireDb(res)) return;
+    try {
+      const stock = await getPublicStock(db);
+      res.setHeader("Cache-Control", "public, max-age=15");
+      return json(res, 200, { ok: true, stock });
+    } catch (err) {
+      console.error("/api/stock failed:", err);
+      return json(res, 500, { ok: false, error: "stock_lookup_failed" });
+    }
   }
 
   if (pathname === "/webhooks/stripe" && req.method === "POST") {
@@ -298,7 +358,8 @@ server.listen(Number(PORT), HOST, () => {
   console.log(`Tempest key server listening on http://${HOST}:${PORT}`);
   console.log(`  Admin:    ${adminEnabled ? "/admin (ENABLED)" : "DISABLED (set ADMIN_ENABLED=true to enable)"}`);
   console.log(`  Webhook:  POST /webhooks/stripe`);
-  console.log(`  Database: ${KEY_DB_PATH}`);
+  console.log(`  Stock:    GET  /api/stock`);
+  console.log(`  Database: ${dbConfigured ? "Supabase" : "NOT CONFIGURED (set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, KEY_ENCRYPTION_SECRET)"}`);
   if (adminEnabled && !adminPasswordConfigured()) {
     console.warn("  WARNING: ADMIN_PASSWORD not set — admin login disabled.");
   }

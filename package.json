@@ -12,10 +12,10 @@
     "preview": "vite preview",
     "start:server": "node server/server.mjs",
     "key-webhook": "npm run start:server",
-    "keys": "node server/keys-cli.mjs"
+    "keys": "node --env-file-if-exists=.env server/keys-cli.mjs"
   },
   "dependencies": {
-    "better-sqlite3": "^11.10.0",
+    "@supabase/supabase-js": "^2.106.2",
     "resend": "^4.6.0",
     "stripe": "^18.0.0"
   },

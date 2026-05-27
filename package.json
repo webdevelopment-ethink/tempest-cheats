@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "node server/server.mjs",
     "start:server": "node server/server.mjs",
     "key-webhook": "npm run start:server",
     "keys": "node --env-file-if-exists=.env server/keys-cli.mjs"

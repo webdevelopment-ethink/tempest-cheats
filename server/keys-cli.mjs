@@ -9,6 +9,7 @@ import {
   lookupBySession,
   assertProductId,
 } from "./db.mjs";
+import { sendKeyEmail } from "./email.mjs";
 
 const [, , command, ...args] = process.argv;
 
@@ -28,6 +29,7 @@ Commands:
   add <product-id> <key>               Add a single key
   lookup email <address>               Find keys sold to an email
   lookup session <session_id>          Find key for a Stripe checkout session
+  test-email <address>                 Send a sample delivery email to verify Resend
 
 Product IDs:
   arc-1-day, arc-7-day, arc-30-day
@@ -151,6 +153,29 @@ Delivery for session ${value}:
   process.exit(1);
 }
 
+async function cmdTestEmail(address) {
+  if (!address || !/.+@.+\..+/.test(address)) {
+    console.error('Provide an email address: npm run keys -- test-email you@example.com');
+    process.exit(1);
+  }
+  if (!process.env.RESEND_API_KEY || !process.env.KEY_EMAIL_FROM) {
+    console.error("RESEND_API_KEY and KEY_EMAIL_FROM must be set in .env");
+    process.exit(1);
+  }
+
+  const fakeKey = `TEST-${Date.now().toString(36).toUpperCase()}-DO-NOT-USE`;
+  console.log(`Sending test email to ${address} (fake key: ${fakeKey})...`);
+
+  await sendKeyEmail({
+    email: address,
+    productId: "arc-1-day",
+    keyCode: fakeKey,
+  });
+
+  console.log(`\n✓ Test email sent. Check ${address} (and the spam folder).`);
+  console.log("  This did NOT touch the keys table — inventory is unchanged.\n");
+}
+
 async function main() {
   switch (command) {
     case "stock":
@@ -164,6 +189,9 @@ async function main() {
       break;
     case "lookup":
       await cmdLookup(getDb(), args[0], args[1]);
+      break;
+    case "test-email":
+      await cmdTestEmail(args[0]);
       break;
     case undefined:
     case "help":

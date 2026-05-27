@@ -75,6 +75,10 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+-- Resolve ambiguous names (OUT params share names with table columns) in
+-- favor of the table column.  Without this we'd get
+-- "column reference X is ambiguous" on every call.
+#variable_conflict use_column
 declare
   v_existing_key_id    bigint;
   v_existing_encrypted text;

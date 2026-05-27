@@ -314,8 +314,14 @@ const server = createServer(async (req, res) => {
       res.setHeader("Cache-Control", "public, max-age=15");
       return json(res, 200, { ok: true, stock });
     } catch (err) {
-      console.error("/api/stock failed:", err);
-      return json(res, 500, { ok: false, error: "stock_lookup_failed" });
+      const detail = {
+        message: err?.message || String(err),
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+      };
+      console.error("/api/stock failed:", JSON.stringify(detail));
+      return json(res, 500, { ok: false, error: "stock_lookup_failed", detail });
     }
   }
 

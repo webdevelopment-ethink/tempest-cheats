@@ -1,5 +1,8 @@
 [build]
 builder = "nixpacks"
+# Railway only runs the backend server. The frontend is built by Vercel,
+# so we explicitly skip the Vite build step here.
+buildCommand = "echo 'Skipping frontend build on Railway (server-only)'"
 
 [deploy]
 startCommand = "node server/server.mjs"

@@ -127,10 +127,10 @@ export async function reserveKeyForOrder(db, { productId, email, stripeSessionId
     throw new Error("reserve_key returned no row");
   }
 
-  const keyCode = decryptKey(row.key_code_encrypted);
+  const keyCode = decryptKey(row.out_key_code_encrypted);
 
   return {
-    alreadyDelivered: Boolean(row.already_delivered),
+    alreadyDelivered: Boolean(row.out_already_delivered),
     keyCode,
     productId,
     email,

@@ -62,23 +62,24 @@ create table if not exists public.deliveries (
 -- one instead (idempotent — Stripe may retry webhooks).
 -- ----------------------------------------------------------------------------
 
-create or replace function public.reserve_key(
+-- Drop any prior version first — CREATE OR REPLACE FUNCTION cannot change
+-- OUT parameter names, and earlier revisions of this schema used names that
+-- collided with table columns (causing "column reference is ambiguous").
+drop function if exists public.reserve_key(text, text, text);
+
+create function public.reserve_key(
   p_product_id        text,
   p_email             text,
   p_stripe_session_id text
 ) returns table (
-  key_id              bigint,
-  key_code_encrypted  text,
-  already_delivered   boolean
+  out_key_id              bigint,
+  out_key_code_encrypted  text,
+  out_already_delivered   boolean
 )
 language plpgsql
 security definer
 set search_path = public
 as $$
--- Resolve ambiguous names (OUT params share names with table columns) in
--- favor of the table column.  Without this we'd get
--- "column reference X is ambiguous" on every call.
-#variable_conflict use_column
 declare
   v_existing_key_id    bigint;
   v_existing_encrypted text;
@@ -93,9 +94,9 @@ begin
   where d.stripe_session_id = p_stripe_session_id;
 
   if found then
-    key_id := v_existing_key_id;
-    key_code_encrypted := v_existing_encrypted;
-    already_delivered := true;
+    out_key_id := v_existing_key_id;
+    out_key_code_encrypted := v_existing_encrypted;
+    out_already_delivered := true;
     return next;
     return;
   end if;
@@ -124,9 +125,9 @@ begin
   insert into public.deliveries (stripe_session_id, key_id, product_id, email)
   values (p_stripe_session_id, v_picked_id, p_product_id, p_email);
 
-  key_id := v_picked_id;
-  key_code_encrypted := v_picked_encrypted;
-  already_delivered := false;
+  out_key_id := v_picked_id;
+  out_key_code_encrypted := v_picked_encrypted;
+  out_already_delivered := false;
   return next;
 end;
 $$;

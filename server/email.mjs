@@ -25,6 +25,7 @@ export async function sendKeyEmail({ email, productId, keyCode }) {
 
   const productName = productDisplayName(productId);
   const safeKey = escapeHtml(keyCode);
+  const loaderUrl = "https://fellaspanel.com/LoaderDownload/";
 
   return resend.emails.send({
     from: process.env.KEY_EMAIL_FROM,
@@ -32,12 +33,29 @@ export async function sendKeyEmail({ email, productId, keyCode }) {
     replyTo: process.env.KEY_EMAIL_REPLY_TO || undefined,
     subject: `Your ${productName} license key`,
     html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;max-width:520px">
-        <h2>Your purchase is complete</h2>
-        <p>Thanks for your order. Here is your license key:</p>
-        <p style="font-size:18px;font-weight:700;letter-spacing:1px;padding:12px 16px;background:#f4f4f4;border-radius:8px">${safeKey}</p>
-        <p>Keep this email safe. If you need help, open a Discord support ticket using the <strong>same email address</strong> you used at checkout.</p>
-        <p style="font-size:13px;color:#666">Product: ${escapeHtml(productName)}</p>
+      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;max-width:560px">
+        <h2 style="margin:0 0 12px">Your purchase is complete</h2>
+        <p style="margin:0 0 18px">Thanks for your order — follow the two steps below to get up and running.</p>
+
+        <h3 style="margin:24px 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.5px;color:#666">Step 1 — Your license key</h3>
+        <p style="font-size:18px;font-weight:700;letter-spacing:1px;padding:12px 16px;background:#f4f4f4;border-radius:8px;margin:0">${safeKey}</p>
+
+        <h3 style="margin:28px 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.5px;color:#666">Step 2 — Download the loader</h3>
+        <p style="margin:0 0 14px">You'll need the loader to activate your key. Download it from the official link below:</p>
+        <p style="margin:0 0 14px">
+          <a href="${loaderUrl}"
+             style="display:inline-block;background:#111;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:8px">
+            Download Loader
+          </a>
+        </p>
+        <p style="margin:0 0 18px;font-size:13px;color:#666">
+          Or copy and paste this link into your browser:<br>
+          <a href="${loaderUrl}" style="color:#0a58ca;word-break:break-all">${loaderUrl}</a>
+        </p>
+
+        <hr style="border:none;border-top:1px solid #e5e5e5;margin:24px 0">
+        <p style="margin:0 0 8px">Keep this email safe. If you need help, open a Discord support ticket using the <strong>same email address</strong> you used at checkout.</p>
+        <p style="margin:0;font-size:13px;color:#666">Product: ${escapeHtml(productName)}</p>
       </div>
     `,
   });

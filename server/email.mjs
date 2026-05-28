@@ -27,7 +27,7 @@ export async function sendKeyEmail({ email, productId, keyCode }) {
   const safeKey = escapeHtml(keyCode);
   const loaderUrl = "https://fellaspanel.com/LoaderDownload/";
 
-  return resend.emails.send({
+  const response = await resend.emails.send({
     from: process.env.KEY_EMAIL_FROM,
     to: [email],
     replyTo: process.env.KEY_EMAIL_REPLY_TO || undefined,
@@ -59,4 +59,17 @@ export async function sendKeyEmail({ email, productId, keyCode }) {
       </div>
     `,
   });
+
+  // The Resend SDK does NOT throw on invalid API key / bad sender / etc.
+  // It returns { data, error } — we have to surface the error explicitly,
+  // otherwise the CLI (and the Stripe webhook handler) will think the
+  // email succeeded when it silently failed.
+  if (response?.error) {
+    const err = response.error;
+    const message = err.message || err.name || "Resend rejected the email";
+    const detail = JSON.stringify(err);
+    throw new Error(`Email send failed: ${message} (${detail})`);
+  }
+
+  return response;
 }
